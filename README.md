@@ -102,7 +102,8 @@ The system focuses on:
 2. Start Config Service
 3. Start API Gateway
 4. Start Auth Service
-5. Start Order, Product, and Customer services
+5. Start Zipkin
+6. Start Order, Product, and Customer services
 
 ---
 
