@@ -14,7 +14,7 @@ The system focuses on:
 
 ## Architecture Overview
 
-![Architecture Diagram](docs/architecture-diagram.png)
+![Architecture Diagram](docs/springboot-microservices-architecture.png)
 
 ---
 
