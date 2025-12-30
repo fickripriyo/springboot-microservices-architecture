@@ -93,17 +93,32 @@ The system focuses on:
 - Resilience4j
 - Zipkin
 - MySQL
+- Docker & Docker Compose
 
 ---
 
-## How to Run (Local)
+## How to Run 
+Running the Project with Docker (Recommended)
 
-1. Start Registry Service (Eureka)
-2. Start Config Service
-3. Start API Gateway
-4. Start Auth Service
-5. Start Zipkin
-6. Start Order, Product, and Customer services
+Prerequisites
+- Docker
+- Docker Compose
+
+Start All Services
+
+docker compose up -d
+
+This will start:
+
+1. Eureka Registry
+2. Config Server
+3. API Gateway
+4. Auth Service
+5. Order Service
+6 Product Service
+7. Customer Service
+8. Zipkin
+10. MySQL databases for each service
 
 ---
 
