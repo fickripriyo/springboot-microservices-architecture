@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: order-service
+  datasource:
+    url: jdbc:mysql://mysql-order:3306/dborder
+    username: orderuser
+    password: orderpass
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  zipkin:
+    base-url: http://zipkin:9411
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+    exporter:
+      zipkin:
+        enabled: true 
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://registry-service:8761/eureka/

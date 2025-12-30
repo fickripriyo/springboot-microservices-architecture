@@ -1,0 +1,192 @@
+services:
+  mysql-auth:
+    image: mysql:8.0
+    container_name: mysql-auth
+    restart: always
+    environment:
+      MYSQL_DATABASE: dbuser
+      MYSQL_USER: authuser
+      MYSQL_PASSWORD: authpass
+      MYSQL_ROOT_PASSWORD: rootpass
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-auth-data:/var/lib/mysql
+    networks:
+      - microservices-net
+  mysql-order:
+    image: mysql:8.0
+    container_name: mysql-order
+    restart: always
+    environment:
+      MYSQL_DATABASE: dborder
+      MYSQL_USER: orderuser
+      MYSQL_PASSWORD: orderpass
+      MYSQL_ROOT_PASSWORD: rootpass
+    ports:
+      - "3308:3306"
+    volumes:
+      - mysql-order-data:/var/lib/mysql
+    networks:
+      - microservices-net
+
+  mysql-product:
+    image: mysql:8.0
+    container_name: mysql-product
+    restart: always
+    environment:
+      MYSQL_DATABASE: dbproduct
+      MYSQL_USER: productuser
+      MYSQL_PASSWORD: productpass
+      MYSQL_ROOT_PASSWORD: rootpass
+    ports:
+      - "3309:3306"
+    volumes:
+      - mysql-product-data:/var/lib/mysql
+    networks:
+      - microservices-net
+
+  mysql-customer:
+    image: mysql:8.0
+    container_name: mysql-customer
+    restart: always
+    environment:
+      MYSQL_DATABASE: dbcustomer
+      MYSQL_USER: customeruser
+      MYSQL_PASSWORD: customerpass
+      MYSQL_ROOT_PASSWORD: rootpass
+    ports:
+      - "3310:3306"
+    volumes:
+      - mysql-customer-data:/var/lib/mysql
+    networks:
+      - microservices-net
+
+
+  registry-service:
+    image: registry-service
+    container_name: registry-service
+    restart: always
+    ports:
+      - "8761:8761"
+    networks:
+      - microservices-net
+
+  auth-service:
+    image: auth-service
+    container_name: auth-service
+    restart: always
+    depends_on:
+      - mysql-auth
+      - registry-service
+    ports:
+      - "8099:8099"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-auth:3306/dbuser
+      SPRING_DATASOURCE_USERNAME: authuser
+      SPRING_DATASOURCE_PASSWORD: authpass
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://registry-service:8761/eureka/
+    networks:
+      - microservices-net
+    
+  api-gateway:
+    image: api-gateway
+    container_name: api-gateway
+    restart: always
+    depends_on:
+      - registry-service
+      - auth-service
+    ports:
+      - "80:80"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://registry-service:8761/eureka/
+    networks:
+      - microservices-net
+
+  order-service:
+    image: order-service
+    container_name: order-service
+    restart: always
+    depends_on:
+      - registry-service
+      - config-server
+    ports:
+      - "8083:8083"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://registry-service:8761/eureka/
+      SPRING_CONFIG_IMPORT: configserver:http://config-server:8088
+      SPRING_PROFILES_ACTIVE: docker
+    networks:
+      - microservices-net
+
+  product-service:
+    image: product-service
+    container_name: product-service
+    restart: always
+    depends_on:
+      - mysql-product
+      - registry-service
+      - config-server
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_CONFIG_IMPORT: configserver:http://config-server:8088
+      SPRING_PROFILES_ACTIVE: docker
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://registry-service:8761/eureka/
+    networks:
+      - microservices-net
+
+  customer-service:
+    image: customer-service
+    container_name: customer-service
+    restart: always
+    depends_on:
+      - mysql-customer
+      - registry-service
+      - config-server
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_CONFIG_IMPORT: configserver:http://config-server:8088
+      SPRING_PROFILES_ACTIVE: docker
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://registry-service:8761/eureka/
+    networks:
+      - microservices-net
+
+
+  config-server:
+    image: config-server
+    container_name: config-server
+    restart: always
+    depends_on:
+      - registry-service
+    ports:
+      - "8088:8088"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://registry-service:8761/eureka/
+    networks:
+      - microservices-net
+
+  zipkin:
+    image: openzipkin/zipkin:2.24
+    container_name: zipkin
+    ports:
+      - "9411:9411"
+    environment:
+      - STORAGE_TYPE=mem
+    networks:
+      - microservices-net
+
+
+
+
+volumes:
+  mysql-auth-data:
+  mysql-order-data:
+  mysql-product-data:
+  mysql-customer-data:
+
+networks:
+  microservices-net:
+    driver: bridge

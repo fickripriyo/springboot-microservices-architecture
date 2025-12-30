@@ -12,10 +12,14 @@ spring:
   application:
     name: auth-service
   datasource:
-      url: jdbc:mysql://localhost:3306/dbuser
-      username: root
-      password: 12345678q
-      driver-class-name: com.mysql.jdbc.Driver
+      # url: jdbc:mysql://localhost:3306/dbuser
+      # username: root
+      # password: 12345678q
+      # driver-class-name: com.mysql.jdbc.Driver
+      url: jdbc:mysql://mysql-auth:3306/dbuser
+      username: authuser
+      password: authpass
+      driver-class-name: com.mysql.cj.jdbc.Driver
       hikari:
           minimumIdle: 2
           maximumPoolSize: 5

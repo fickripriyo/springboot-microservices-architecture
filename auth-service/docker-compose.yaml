@@ -1,0 +1,41 @@
+version: "3.8"
+
+services:
+  mysql-auth:
+    image: mysql:8.0
+    container_name: mysql-auth
+    restart: always
+    environment:
+      MYSQL_DATABASE: dbuser
+      MYSQL_USER: authuser
+      MYSQL_PASSWORD: authpass
+      MYSQL_ROOT_PASSWORD: rootpass
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-auth-data:/var/lib/mysql
+    networks:
+      - auth-net
+
+  auth-service:
+    image: auth-service
+    container_name: auth-service
+    restart: always
+    depends_on:
+      - mysql-auth
+    ports:
+      - "8099:8099"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-auth:3306/dbuser
+      SPRING_DATASOURCE_USERNAME: authuser
+      SPRING_DATASOURCE_PASSWORD: authpass
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    networks:
+      - auth-net
+
+volumes:
+  mysql-auth-data:
+
+networks:
+  auth-net:
+    driver: bridge
