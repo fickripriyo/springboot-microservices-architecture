@@ -3,30 +3,29 @@ services:
     image: mysql:8.0
     container_name: mysql-auth
     restart: unless-stopped
-
     environment:
-      MYSQL_DATABASE: dbuser
-      MYSQL_USER: authuser
-      MYSQL_PASSWORD: authpass
-      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: ${MYSQL_AUTH_DB}
+      MYSQL_USER: ${MYSQL_AUTH_USER}
+      MYSQL_PASSWORD: ${MYSQL_AUTH_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     ports:
-      - "3307:3306"
+      - "${MYSQL_AUTH_PORT}:3306"
     volumes:
       - mysql-auth-data:/var/lib/mysql
     networks:
       - microservices-net
+
   mysql-order:
     image: mysql:8.0
     container_name: mysql-order
     restart: unless-stopped
-
     environment:
-      MYSQL_DATABASE: dborder
-      MYSQL_USER: orderuser
-      MYSQL_PASSWORD: orderpass
-      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: ${MYSQL_ORDER_DB}
+      MYSQL_USER: ${MYSQL_ORDER_USER}
+      MYSQL_PASSWORD: ${MYSQL_ORDER_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     ports:
-      - "3308:3306"
+      - "${MYSQL_ORDER_PORT}:3306"
     volumes:
       - mysql-order-data:/var/lib/mysql
     networks:
@@ -36,14 +35,13 @@ services:
     image: mysql:8.0
     container_name: mysql-product
     restart: unless-stopped
-
     environment:
-      MYSQL_DATABASE: dbproduct
-      MYSQL_USER: productuser
-      MYSQL_PASSWORD: productpass
-      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: ${MYSQL_PRODUCT_DB}
+      MYSQL_USER: ${MYSQL_PRODUCT_USER}
+      MYSQL_PASSWORD: ${MYSQL_PRODUCT_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     ports:
-      - "3309:3306"
+      - "${MYSQL_PRODUCT_PORT}:3306"
     volumes:
       - mysql-product-data:/var/lib/mysql
     networks:
@@ -53,132 +51,123 @@ services:
     image: mysql:8.0
     container_name: mysql-customer
     restart: unless-stopped
-
     environment:
-      MYSQL_DATABASE: dbcustomer
-      MYSQL_USER: customeruser
-      MYSQL_PASSWORD: customerpass
-      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: ${MYSQL_CUSTOMER_DB}
+      MYSQL_USER: ${MYSQL_CUSTOMER_USER}
+      MYSQL_PASSWORD: ${MYSQL_CUSTOMER_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     ports:
-      - "3310:3306"
+      - "${MYSQL_CUSTOMER_PORT}:3306"
     volumes:
       - mysql-customer-data:/var/lib/mysql
     networks:
       - microservices-net
 
-
   registry-service:
     build:
       context: ./registry-service
-      dockerfile: Dockerfile
     image: registry-service
     container_name: registry-service
     restart: unless-stopped
-
     ports:
-      - "8761:8761"
+      - "${REGISTRY_SERVICE_PORT}:8761"
     networks:
       - microservices-net
 
   auth-service:
     build:
       context: ./auth-service
-      dockerfile: Dockerfile
     image: auth-service
     container_name: auth-service
     restart: unless-stopped
-
     depends_on:
       - mysql-auth
       - registry-service
     ports:
-      - "8099:8099"
+      - "${AUTH_SERVICE_PORT}:8099"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-auth:3306/dbuser
-      SPRING_DATASOURCE_USERNAME: authuser
-      SPRING_DATASOURCE_PASSWORD: authpass
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-auth:3306/${MYSQL_AUTH_DB}
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_AUTH_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_AUTH_PASSWORD}
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://registry-service:8761/eureka/
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://registry-service:${REGISTRY_SERVICE_PORT}/eureka/
+      JWT_SECRET: ${JWT_SECRET}
     networks:
       - microservices-net
-    
+
   api-gateway:
     build:
       context: ./api-gateway
-      dockerfile: Dockerfile
     image: api-gateway
     container_name: api-gateway
     restart: unless-stopped
-
     depends_on:
       - registry-service
       - auth-service
     ports:
-      - "80:80"
+      - "${API_GATEWAY_PORT}:80"
     environment:
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://registry-service:8761/eureka/
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://registry-service:${REGISTRY_SERVICE_PORT}/eureka/
+      JWT_SECRET: ${JWT_SECRET}
     networks:
       - microservices-net
+
 
   order-service:
     build:
       context: ./order-service
-      dockerfile: Dockerfile
     image: order-service
     container_name: order-service
     restart: unless-stopped
-
     depends_on:
       - registry-service
       - config-server
     ports:
-      - "8083:8083"
+      - "${ORDER_SERVICE_PORT}:8083"
     environment:
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://registry-service:8761/eureka/
-      SPRING_CONFIG_IMPORT: configserver:http://config-server:8088
-      SPRING_PROFILES_ACTIVE: docker
+      SPRING_CONFIG_IMPORT: configserver:http://config-server:${CONFIG_SERVER_PORT}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://registry-service:${REGISTRY_SERVICE_PORT}/eureka/
     networks:
       - microservices-net
+
 
   product-service:
     build:
       context: ./product-service
-      dockerfile: Dockerfile
     image: product-service
     container_name: product-service
     restart: unless-stopped
-
     depends_on:
       - mysql-product
       - registry-service
       - config-server
     ports:
-      - "8082:8082"
+      - "${PRODUCT_SERVICE_PORT}:8082"
     environment:
-      SPRING_CONFIG_IMPORT: configserver:http://config-server:8088
-      SPRING_PROFILES_ACTIVE: docker
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://registry-service:8761/eureka/
+      SPRING_CONFIG_IMPORT: configserver:http://config-server:${CONFIG_SERVER_PORT}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://registry-service:${REGISTRY_SERVICE_PORT}/eureka/
     networks:
       - microservices-net
+
 
   customer-service:
     build:
       context: ./customer-service
-      dockerfile: Dockerfile
     image: customer-service
     container_name: customer-service
     restart: unless-stopped
-
     depends_on:
       - mysql-customer
       - registry-service
       - config-server
     ports:
-      - "8081:8081"
+      - "${CUSTOMER_SERVICE_PORT}:8081"
     environment:
-      SPRING_CONFIG_IMPORT: configserver:http://config-server:8088
-      SPRING_PROFILES_ACTIVE: docker
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://registry-service:8761/eureka/
+      SPRING_CONFIG_IMPORT: configserver:http://config-server:${CONFIG_SERVER_PORT}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://registry-service:${REGISTRY_SERVICE_PORT}/eureka/
     networks:
       - microservices-net
 
@@ -186,29 +175,29 @@ services:
   config-server:
     build:
       context: ./config-server
-      dockerfile: Dockerfile
     image: config-server
     container_name: config-server
     restart: unless-stopped
-
     depends_on:
       - registry-service
     ports:
-      - "8088:8088"
+      - "${CONFIG_SERVER_PORT}:8088"
     environment:
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://registry-service:8761/eureka/
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://registry-service:${REGISTRY_SERVICE_PORT}/eureka/
     networks:
       - microservices-net
+
 
   zipkin:
     image: openzipkin/zipkin:2.24
     container_name: zipkin
     ports:
-      - "9411:9411"
+      - "${ZIPKIN_PORT}:9411"
     environment:
-      - STORAGE_TYPE=mem
+      STORAGE_TYPE: mem
     networks:
       - microservices-net
+
 
 volumes:
   mysql-auth-data:
