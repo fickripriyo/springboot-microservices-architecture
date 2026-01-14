@@ -104,6 +104,25 @@ Prerequisites
 - Docker
 - Docker Compose
 
+# 1. Clone repository
+git clone
+cd springboot-microservices
+
+# 2. Setup environment variables
+Open terminal 
+cp .env.example .env
+
+# 3. Edit .env and set required values
+#    - MYSQL_ROOT_PASSWORD
+#    - JWT_SECRET
+# Generate JWT secret with:
+# openssl rand -base64 64
+
+# 4. Build and start all services
+docker compose up -d --build
+
+# 5. Verify services
+docker compose ps
 Start All Services
 
 docker compose up -d
