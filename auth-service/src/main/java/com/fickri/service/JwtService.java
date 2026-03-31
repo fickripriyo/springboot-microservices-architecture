@@ -27,6 +27,7 @@ public class JwtService {
     ) {
         this.jwtSecret = jwtSecret;
         this.jwtExpiration = jwtExpiration;
+        System.out.println("AUTH SECRET: " + jwtSecret);
     }
     public String generateToken(String userName){
         Map<String, Object> claims = new HashMap<>();

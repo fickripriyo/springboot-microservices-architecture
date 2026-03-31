@@ -21,10 +21,21 @@ import com.fickri.service.UserInfoService;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
-        return http.csrf().disable().authorizeHttpRequests()
-        .requestMatchers("/api/auth/register", "/api/auth/generateToken", "/api/auth/validateToken").permitAll().and().build();
+       @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
+        http
+            .csrf(csrf -> csrf.disable())
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers(
+                        "/api/auth/register",
+                        "/api/auth/generateToken",
+                        "/api/auth/validateToken"
+                ).permitAll()
+                .anyRequest().authenticated()
+            );
+
+        return http.build();
     }
 
     @Bean

@@ -1,5 +1,7 @@
 package com.fickri.controller;
 
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fickri.dto.AuthRequest;
+import com.fickri.dto.LoginResponse;
 import com.fickri.entity.UserInfo;
 import com.fickri.service.JwtService;
 import com.fickri.service.UserInfoService;
@@ -36,11 +39,13 @@ public class UserController {
     }
 
     @PostMapping("/generateToken")
-    public String generateToken (@RequestBody AuthRequest authRequest){
-        Authentication authentication = authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(authRequest.getName(), authRequest.getPassword()));
+    public LoginResponse generateToken (@RequestBody AuthRequest authRequest){
+           System.out.println("LOGIN HIT");
+            Authentication authentication = authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(authRequest.getUserName(), authRequest.getPassword()));
         if(authentication.isAuthenticated()){
-            return jwtService.generateToken(authRequest.getName());
+            String token = jwtService.generateToken(authRequest.getUserName());
+            return new LoginResponse(token);
         }else{
             throw new RuntimeException("Invalid Username or Password");
         }

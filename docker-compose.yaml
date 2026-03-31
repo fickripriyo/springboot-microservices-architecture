@@ -83,8 +83,7 @@ services:
     depends_on:
       - mysql-auth
       - registry-service
-    ports:
-      - "${AUTH_SERVICE_PORT}:8099"
+   
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql-auth:3306/${MYSQL_AUTH_DB}
       SPRING_DATASOURCE_USERNAME: ${MYSQL_AUTH_USER}
@@ -92,6 +91,7 @@ services:
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://registry-service:${REGISTRY_SERVICE_PORT}/eureka/
       JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION}
     networks:
       - microservices-net
 
