@@ -9,13 +9,16 @@ deploy:
     - ssh-keyscan -H $VPS_HOST >> ~/.ssh/known_hosts
 
   script:
-    - ssh $VPS_USER@$VPS_HOST "
-        cd /root &&
-        if [ ! -d 'app' ]; then
-          git clone git@gitlab.com:fickofickri/springboot-microservices-architecture.git app;
-        fi &&
-        cd app &&
-        git pull origin main &&
-        docker compose down &&
-        docker compose up -d --build
-      "
+  - ssh $VPS_USER@$VPS_HOST "
+      cd /root &&
+      if [ ! -d 'app' ]; then
+        git clone git@gitlab.com:fickofickri/springboot-microservices-architecture.git app;
+      fi &&
+      cd app &&
+      git pull origin main &&
+
+      docker compose stop registry-service config-server mysql-auth auth-service api-gateway || true &&
+      docker compose rm -f registry-service config-server mysql-auth auth-service api-gateway || true &&
+
+      docker compose up -d --build registry-service config-server mysql-auth auth-service api-gateway
+    "
