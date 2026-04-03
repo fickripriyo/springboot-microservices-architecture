@@ -55,6 +55,7 @@ deploy-auth:
   rules:
     - changes:
         - auth-service/**
+        - docker-compose.yml
 
 # ======================
 # CUSTOMER SERVICE
@@ -81,6 +82,7 @@ deploy-customer:
   rules:
     - changes:
         - customer-service/**
+        - docker-compose.yml
 
 # ======================
 # PRODUCT SERVICE
@@ -107,6 +109,7 @@ deploy-product:
   rules:
     - changes:
         - product-service/**
+        - docker-compose.yml
 
 # ======================
 # ORDER SERVICE
@@ -133,6 +136,7 @@ deploy-order:
   rules:
     - changes:
         - order-service/**
+        - docker-compose.yml
 
 # ======================
 # REGISTRY SERVICE
@@ -159,6 +163,7 @@ deploy-registry:
   rules:
     - changes:
         - registry-service/**
+        - docker-compose.yml
 
 # ======================
 # CONFIG SERVER
@@ -185,6 +190,7 @@ deploy-config:
   rules:
     - changes:
         - config-server/**
+        - docker-compose.yml
 
 # ======================
 # API GATEWAY
@@ -211,3 +217,4 @@ deploy-gateway:
   rules:
     - changes:
         - api-gateway/**
+        - docker-compose.yml
