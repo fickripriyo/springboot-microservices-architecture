@@ -3,43 +3,26 @@ stages:
   - deploy
 
 variables:
-  IMAGE_NAME: registry.gitlab.com/fickofickri/springboot-microservices-architecture/auth-service
   DOCKER_HOST: tcp://docker:2375
   DOCKER_TLS_CERTDIR: ""
 
 # ======================
-# BUILD & PUSH IMAGE
+# BUILD
 # ======================
-build-auth:
+.build-template:
   stage: build
   image: docker:24.0.5
   services:
     - docker:24.0.5-dind
-
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-
-  script:
-    # build image
-    - docker build -t $IMAGE_NAME:$CI_COMMIT_SHORT_SHA ./auth-service
-
-    # tag
-    - docker tag $IMAGE_NAME:$CI_COMMIT_SHORT_SHA $IMAGE_NAME:latest
-
-    # push
-    - docker push $IMAGE_NAME:$CI_COMMIT_SHORT_SHA
-    - docker push $IMAGE_NAME:latest
-
-  only:
-    - main
 
 # ======================
 # DEPLOY
 # ======================
-deploy:
+.deploy-template:
   stage: deploy
   image: alpine:latest
-
   before_script:
     - apk add --no-cache openssh-client
     - mkdir -p ~/.ssh
@@ -47,19 +30,184 @@ deploy:
     - chmod 600 ~/.ssh/id_ed25519
     - ssh-keyscan -H $VPS_HOST >> ~/.ssh/known_hosts
 
+# ======================
+# AUTH SERVICE
+# ======================
+build-auth:
+  extends: .build-template
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE/auth-service:$CI_COMMIT_SHORT_SHA ./auth-service
+    - docker tag $CI_REGISTRY_IMAGE/auth-service:$CI_COMMIT_SHORT_SHA $CI_REGISTRY_IMAGE/auth-service:latest
+    - docker push $CI_REGISTRY_IMAGE/auth-service:$CI_COMMIT_SHORT_SHA
+    - docker push $CI_REGISTRY_IMAGE/auth-service:latest
+  rules:
+    - changes:
+        - auth-service/**
+
+deploy-auth:
+  extends: .deploy-template
   script:
     - ssh $VPS_USER@$VPS_HOST "
-        cd /root &&
-        if [ ! -d 'app' ]; then
-          git clone git@gitlab.com:fickofickri/springboot-microservices-architecture.git app;
-        fi &&
-        cd app &&
-        git pull origin main &&
-
-        docker compose pull &&
-        docker compose down || true &&
-        docker compose up -d
+        cd /root/app &&
+        docker compose pull auth-service &&
+        docker compose up -d auth-service
       "
+  rules:
+    - changes:
+        - auth-service/**
 
-  only:
-    - main
+# ======================
+# CUSTOMER SERVICE
+# ======================
+build-customer:
+  extends: .build-template
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE/customer-service:$CI_COMMIT_SHORT_SHA ./customer-service
+    - docker tag $CI_REGISTRY_IMAGE/customer-service:$CI_COMMIT_SHORT_SHA $CI_REGISTRY_IMAGE/customer-service:latest
+    - docker push $CI_REGISTRY_IMAGE/customer-service:$CI_COMMIT_SHORT_SHA
+    - docker push $CI_REGISTRY_IMAGE/customer-service:latest
+  rules:
+    - changes:
+        - customer-service/**
+
+deploy-customer:
+  extends: .deploy-template
+  script:
+    - ssh $VPS_USER@$VPS_HOST "
+        cd /root/app &&
+        docker compose pull customer-service &&
+        docker compose up -d customer-service
+      "
+  rules:
+    - changes:
+        - customer-service/**
+
+# ======================
+# PRODUCT SERVICE
+# ======================
+build-product:
+  extends: .build-template
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE/product-service:$CI_COMMIT_SHORT_SHA ./product-service
+    - docker tag $CI_REGISTRY_IMAGE/product-service:$CI_COMMIT_SHORT_SHA $CI_REGISTRY_IMAGE/product-service:latest
+    - docker push $CI_REGISTRY_IMAGE/product-service:$CI_COMMIT_SHORT_SHA
+    - docker push $CI_REGISTRY_IMAGE/product-service:latest
+  rules:
+    - changes:
+        - product-service/**
+
+deploy-product:
+  extends: .deploy-template
+  script:
+    - ssh $VPS_USER@$VPS_HOST "
+        cd /root/app &&
+        docker compose pull product-service &&
+        docker compose up -d product-service
+      "
+  rules:
+    - changes:
+        - product-service/**
+
+# ======================
+# ORDER SERVICE
+# ======================
+build-order:
+  extends: .build-template
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE/order-service:$CI_COMMIT_SHORT_SHA ./order-service
+    - docker tag $CI_REGISTRY_IMAGE/order-service:$CI_COMMIT_SHORT_SHA $CI_REGISTRY_IMAGE/order-service:latest
+    - docker push $CI_REGISTRY_IMAGE/order-service:$CI_COMMIT_SHORT_SHA
+    - docker push $CI_REGISTRY_IMAGE/order-service:latest
+  rules:
+    - changes:
+        - order-service/**
+
+deploy-order:
+  extends: .deploy-template
+  script:
+    - ssh $VPS_USER@$VPS_HOST "
+        cd /root/app &&
+        docker compose pull order-service &&
+        docker compose up -d order-service
+      "
+  rules:
+    - changes:
+        - order-service/**
+
+# ======================
+# REGISTRY SERVICE
+# ======================
+build-registry:
+  extends: .build-template
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE/registry-service:$CI_COMMIT_SHORT_SHA ./registry-service
+    - docker tag $CI_REGISTRY_IMAGE/registry-service:$CI_COMMIT_SHORT_SHA $CI_REGISTRY_IMAGE/registry-service:latest
+    - docker push $CI_REGISTRY_IMAGE/registry-service:$CI_COMMIT_SHORT_SHA
+    - docker push $CI_REGISTRY_IMAGE/registry-service:latest
+  rules:
+    - changes:
+        - registry-service/**
+
+deploy-registry:
+  extends: .deploy-template
+  script:
+    - ssh $VPS_USER@$VPS_HOST "
+        cd /root/app &&
+        docker compose pull registry-service &&
+        docker compose up -d registry-service
+      "
+  rules:
+    - changes:
+        - registry-service/**
+
+# ======================
+# CONFIG SERVER
+# ======================
+build-config:
+  extends: .build-template
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE/config-server:$CI_COMMIT_SHORT_SHA ./config-server
+    - docker tag $CI_REGISTRY_IMAGE/config-server:$CI_COMMIT_SHORT_SHA $CI_REGISTRY_IMAGE/config-server:latest
+    - docker push $CI_REGISTRY_IMAGE/config-server:$CI_COMMIT_SHORT_SHA
+    - docker push $CI_REGISTRY_IMAGE/config-server:latest
+  rules:
+    - changes:
+        - config-server/**
+
+deploy-config:
+  extends: .deploy-template
+  script:
+    - ssh $VPS_USER@$VPS_HOST "
+        cd /root/app &&
+        docker compose pull config-server &&
+        docker compose up -d config-server
+      "
+  rules:
+    - changes:
+        - config-server/**
+
+# ======================
+# API GATEWAY
+# ======================
+build-gateway:
+  extends: .build-template
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE/api-gateway:$CI_COMMIT_SHORT_SHA ./api-gateway
+    - docker tag $CI_REGISTRY_IMAGE/api-gateway:$CI_COMMIT_SHORT_SHA $CI_REGISTRY_IMAGE/api-gateway:latest
+    - docker push $CI_REGISTRY_IMAGE/api-gateway:$CI_COMMIT_SHORT_SHA
+    - docker push $CI_REGISTRY_IMAGE/api-gateway:latest
+  rules:
+    - changes:
+        - api-gateway/**
+
+deploy-gateway:
+  extends: .deploy-template
+  script:
+    - ssh $VPS_USER@$VPS_HOST "
+        cd /root/app &&
+        docker compose pull api-gateway &&
+        docker compose up -d api-gateway
+      "
+  rules:
+    - changes:
+        - api-gateway/**
