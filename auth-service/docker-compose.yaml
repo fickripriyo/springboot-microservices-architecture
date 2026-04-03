@@ -35,5 +35,5 @@ volumes:
   mysql-auth-data:
 
 networks:
-  auth-net:
-    driver: bridge
+  microservices-net:
+    external: true
